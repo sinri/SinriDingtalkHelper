@@ -22,17 +22,22 @@ class RobotSendApi
     protected $accessToken;
     protected $apiWithAccessToken;
 
+    protected $secret;
+
     public $isDebug;
 
     /**
      * 获取自定义机器人webhook里面的access_token
      * RobotSendApi constructor.
      * @param $accessToken
+     * @param string|null $secret 新版本的钉钉群机器人需要安全验证，如果采用签名方式，需要这一参数
      */
-    public function __construct($accessToken)
+    public function __construct($accessToken, $secret = null)
     {
         $this->accessToken = $accessToken;
         $this->apiWithAccessToken = "https://oapi.dingtalk.com/robot/send?access_token=" . $this->accessToken;
+
+        $this->secret = $secret;
 
         $this->isDebug = false;
     }
@@ -178,9 +183,20 @@ class RobotSendApi
 
     protected function callApi($dataJson)
     {
+        $timestamp = time() * 1000;
+        $sign = null;
+        $signedUrl = $this->apiWithAccessToken;
+        if ($this->secret !== null) {
+            $stringToSign = $timestamp . "\n" . $this->secret;
+            $hash = hash_hmac("sha256", $stringToSign, $this->secret, true);
+            $sign = urlencode(base64_encode($hash));
+
+            $signedUrl .= "&timestamp=" . $timestamp . "&sign=" . $sign;
+        }
+
         $response = SinriDingtalkHelper::executeCurl(
             SinriDingtalkHelper::METHOD_POST,
-            $this->apiWithAccessToken,
+            $signedUrl,
             $dataJson,
             [], [], true
         );

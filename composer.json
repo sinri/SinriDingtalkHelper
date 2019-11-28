@@ -10,10 +10,13 @@
     }
   ],
   "minimum-stability": "stable",
-  "require": {},
+  "require": {
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
   "autoload": {
-    "files": [
-      "autoload.php"
-    ]
+    "psr-4": {
+      "sinri\\sinridingtalkhelper\\": ""
+    }
   }
 }
